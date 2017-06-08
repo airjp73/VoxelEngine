@@ -9,6 +9,7 @@
 //VoxelEngine
 #include "../include/gameLoop.h"
 #include "../include/callbacks.h"
+#include "../include/Logger.h"
 
 //const vars
 const int WINDOW_WIDTH = 800;
@@ -16,6 +17,7 @@ const int WINDOW_HEIGHT = 800;
 
 
 int main() {
+  Logger mainLog("main");
   //============================
   //Initial setup
   //============================
@@ -37,7 +39,7 @@ int main() {
   //Init GLEW
   glewExperimental = GL_TRUE;
   if (glewInit() != GLEW_OK) {
-    std::cout << "Error -- Failed to init GLEW\n";
+    mainLog.log("Failed to init GLEW", Logger::FATAL);
     return 1;
   }
 
@@ -45,8 +47,6 @@ int main() {
   int width, height;
   glfwGetFramebufferSize(mainWindow, &width, &height);
   glViewport(0, 0, width, height);
-  float screenWidth = width;
-  float screenHeight = height;
 
   //Input Callbacks (callbacks.cpp)
   set_input_callbacks(mainWindow);

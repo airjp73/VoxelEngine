@@ -1,6 +1,8 @@
 INCLUDE = include
-SRC = src
+SOURCES = $(wildcard $(SRC)/*.cpp)
+OBJECTS = $(patsubst $(SRC)/%.cpp, $(OBJ)/%.o, $(SOURCES))
 OBJ = obj
+SRC = src
 BIN = bin
 EXE = main
 CC = g++
@@ -8,10 +10,12 @@ CC = g++
 CPPFLAGS=$(shell pkg-config --cflags glfw3) -std=c++11
 LDLIBS=$(shell pkg-config --static --libs glfw3) -lGLEW -lGL -lSOIL -I /usr/include/SOIL
 
-OBJ_FILES = $(OBJ)/callbacks.o $(OBJ)/Camera.o $(OBJ)/gameLoop.o
 
-all: $(SRC)/main.cpp $(OBJ_FILES)
+all: $(OBJECTS)
 	$(CC) $(CPPFLAGS) $^ -o $(BIN)/$(EXE) $(LDLIBS)
+
+$(OBJ)/main.o: $(SRC)/main.cpp
+	$(CC) -c $(CPPFLAGS) $^ -o $@ $(LDLIBS)
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(INCLUDE)/%.h
 	$(CC) -c $(CPPFLAGS) $< -o $@ $(LDLIBS)
