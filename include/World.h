@@ -3,7 +3,6 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 © Aaron Pettengill 2017
 */
 
-//GLFW
-#include <GLFW/glfw3.h>
+class World {
 
-void runGameLoop(GLFWwindow *mainWindow);
+};

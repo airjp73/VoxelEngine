@@ -1,3 +1,11 @@
+/*
+VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
+© Aaron Pettengill 2017
+*/
+
+#ifndef LOGGER_H
+#define LOGGER_H
+
 #include <iostream>
 #include <string>
 
@@ -18,3 +26,5 @@ public:
   {}
   void log(std::string message, int errorLevel);
 };
+
+#endif

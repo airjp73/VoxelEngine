@@ -1,3 +1,4 @@
 #ignore compiled files
 **/obj
 **/bin
+**/testing
