@@ -44,9 +44,10 @@ public:
   void updateVectors();
 
   //=========================
-  //Get view matrix
+  //Getters
   //=========================
   glm::mat4 getViewMatrix();
+  GLfloat getFov();
 
   //=========================
   //Move Camera

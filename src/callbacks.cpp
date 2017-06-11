@@ -18,6 +18,7 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 #include "../include/callbacks.h"
 
 bool keys[1024];
+bool wireframe = false;
 Camera camera;
 
 void set_input_callbacks(GLFWwindow *mainWindow) {
@@ -34,6 +35,17 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
 
   if (keys[GLFW_KEY_ESCAPE])
     glfwSetWindowShouldClose(window, GL_TRUE);
+
+  if (keys[GLFW_KEY_F]) {
+    if (!wireframe) {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      wireframe = true;
+    }
+    else {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      wireframe = false;
+    }
+  }
 }
 
 bool firstMouse = true;

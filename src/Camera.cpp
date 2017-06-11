@@ -48,10 +48,14 @@ void Camera::updateVectors() {
 }
 
 //=========================
-//Get view matrix
+//Getters
 //=========================
 glm::mat4 Camera::getViewMatrix() {
   return glm::lookAt(camPos, camPos + camFront, camUp);
+}
+
+GLfloat Camera::getFov() {
+  return fov;
 }
 
 //=========================

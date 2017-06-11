@@ -52,19 +52,21 @@ int main() {
   int width, height;
   glfwGetFramebufferSize(mainWindow, &width, &height);
   glViewport(0, 0, width, height);
+  float windowWidth = width;
+  float windowHeight = height;
 
   //Input Callbacks (callbacks.cpp)
   set_input_callbacks(mainWindow);
 
   //OpenGL settings
-  glEnable(GL_CULL_FACE);
+  //glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
 
 
   //============================
   //Run Game Loop
   //============================
-  runGameLoop(mainWindow);
+  runGameLoop(mainWindow, windowWidth, windowHeight);
 
   //============================
   //Exit Cleanup
