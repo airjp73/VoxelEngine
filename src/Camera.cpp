@@ -43,6 +43,8 @@ void Camera::updateVectors() {
   front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 
   camFront = glm::normalize(front);
+  front.y = 0;
+  camForward = glm::normalize(front);
   camRight = glm::normalize(glm::cross(front, worldUp));
   camUp =    glm::normalize(glm::cross(camRight, camFront));
 }
@@ -66,9 +68,9 @@ GLfloat Camera::getFov() {
 void Camera::move(bool up, bool down, bool right, bool left, bool fly, bool fall, GLfloat deltaTime) {
   GLfloat velocity = camSpeed * deltaTime;
   if (up)
-    camPos += camFront * velocity;
+    camPos += camForward * velocity;
   if (down)
-    camPos -= camFront * velocity;
+    camPos -= camForward * velocity;
   if (right)
     camPos += camRight * velocity;
   if (left)

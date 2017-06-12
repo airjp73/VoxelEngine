@@ -1,4 +1,6 @@
 #ignore compiled files
 **/obj
 **/bin
+
+#ignore 3rd party libs
 **/libs

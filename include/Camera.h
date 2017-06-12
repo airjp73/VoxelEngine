@@ -19,6 +19,7 @@ private:
   glm::vec3 worldUp;        //objective up of the worldspace
   glm::vec3 camPos;         //pos of cam itself
   glm::vec3 camFront;       //direction cam is pointing
+  glm::vec3 camForward;     //vector for moving forward
   glm::vec3 camRight;       //points to cams positive x-axis
   glm::vec3 camUp;          //points to cams positive y-axis
   glm::mat4 view;

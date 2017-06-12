@@ -19,6 +19,7 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 
 bool keys[1024];
 bool wireframe = false;
+bool cullFace = false;
 Camera camera;
 
 void set_input_callbacks(GLFWwindow *mainWindow) {
@@ -44,6 +45,17 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
     else {
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
       wireframe = false;
+    }
+  }
+
+  if (keys[GLFW_KEY_C]) {
+    if (!cullFace) {
+      cullFace = true;
+      glEnable(GL_CULL_FACE);
+    }
+    else {
+      cullFace = false;
+      glDisable(GL_CULL_FACE);
     }
   }
 }

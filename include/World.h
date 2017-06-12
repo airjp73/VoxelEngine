@@ -30,6 +30,7 @@ private:
 
   void genChunk(glm::ivec3 pos);
   void meshChunk(ChunkPosition &chunk);
+  void fillMeshVerts(ChunkMesh &mesh, glm::vec3 botLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 botRight, bool negFace, int dim);
 
 public:
   World(glm::ivec3 playerStartPos);
