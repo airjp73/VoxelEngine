@@ -30,6 +30,8 @@ void World::render(glm::mat4 view, glm::mat4 projection) {
 
 World::World(glm::ivec3 playerStartPos) {
   _terrainNoise.SetNoiseType(FastNoise::NoiseType::Perlin);
+
+  //generate starting chunks
   genChunk(glm::ivec3(playerStartPos));
 
   //Mesh Data
@@ -87,16 +89,20 @@ void World::genChunk(glm::ivec3 pos) {
 ///////////////////////////////////////////////////
 //meshChunk
 //
-//a big, long, scary chunk of code that implements a greedy meshing type algorithm
+//A big, long, scary chunk of code that implements a greedy meshing type algorithm
 //the way it's implemented here, it loops through every block in the chunk 3 times
+//and checks the top and the bottom face. The reasoning behind this is to reduce
+//the number of cache misses. The int array that contains the chunk data has
+//a size of 16 * 16 * 16 which means that each loop through it is going to have
+//several cache misses. Processing the bottom faces in a separate loop through
+//would double the number of cache misses.
+//In the future, I would like to come up with a solution that involves fewer loops
+//through the chunk. However, it's currently not critical to do so and this solution
+//will do.
 //
-//the first time it processes the top and bottom faces of each block
-//next it processes the positive-x and negative-x faces of the block
-//then finally the positive-z and negative-z faces
-//
-//this function could be cleaned up because there's a lot of repeated code
 ///////////////////////////////////////////////////
 ///////////////////////////////////////////////////
+//Dimension class used for keeping track of coordinates in meshChunk function
 class Dimension {
 private:
   int a[3];
@@ -133,173 +139,164 @@ void World::meshChunk(ChunkPosition &chunk) {
 
 
   ///////////////////////////////////////////////
-  //Start with top and bottom faces
+  //Loop through all 3 dimensions
+  //all the variable names are written as though they're calculating the top and bottom faces (positive y and negative y)
+  //after each iteration of the loop, imagine rotating the entire chunk so that
+  //the faces being calculated are still the top and the bottom
   ///////////////////////////////////////////////
-
-  //experimenting with looping over dimensions
   Dimension dim;
-  //dim.rotate();
   for (; dim.getD() < 3; dim.rotate()) {
 
+    for (*dim.y = 0; *dim.y < CHUNK_SIZE; ++*dim.y) {
 
-
-  for (*dim.y = 0; *dim.y < CHUNK_SIZE; ++*dim.y) {
-
-    bool meshed_top[CHUNK_SIZE][CHUNK_SIZE];
-    bool meshed_bot[CHUNK_SIZE][CHUNK_SIZE];
-    for (int zi = 0; zi < CHUNK_SIZE; ++zi) {
-      for (int xi = 0; xi < CHUNK_SIZE; ++xi) {
-        meshed_top[zi][xi] = false;
-        meshed_bot[zi][xi] = false;
+      bool meshed_top[CHUNK_SIZE][CHUNK_SIZE];
+      bool meshed_bot[CHUNK_SIZE][CHUNK_SIZE];
+      for (int zi = 0; zi < CHUNK_SIZE; ++zi) {
+        for (int xi = 0; xi < CHUNK_SIZE; ++xi) {
+          meshed_top[zi][xi] = false;
+          meshed_bot[zi][xi] = false;
+        }
       }
-    }
 
-    for (*dim.z = 0; *dim.z <= CHUNK_SIZE; ++*dim.z) {
-      //top face vars
-      int  start_x_top = 0, start_z_top = 0; //starting verts
-      int  end_x_top   = 0, end_z_top   = 0; //ending verts
-      bool start_new_top = true;             //starting a new check or continuing a previous check?
-      int  cur_type_top  = -1;               //current block type being checked
+      for (*dim.z = 0; *dim.z <= CHUNK_SIZE; ++*dim.z) {
+        //top face vars
+        int  start_x_top = 0, start_z_top = 0; //starting verts
+        int  end_x_top   = 0, end_z_top   = 0; //ending verts
+        bool start_new_top = true;             //starting a new check or continuing a previous check?
+        int  cur_type_top  = -1;               //current block type being checked
 
-      //bot face vars
-      int  start_x_bot = 0, start_z_bot = 0; //starting verts
-      int  end_x_bot   = 0, end_z_bot   = 0; //ending verts
-      bool start_new_bot = true;             //starting a new check or continuing a previous check?
-      int  cur_type_bot  = -1;               //current block type being checked
-
+        //bot face vars
+        int  start_x_bot = 0, start_z_bot = 0; //starting verts
+        int  end_x_bot   = 0, end_z_bot   = 0; //ending verts
+        bool start_new_bot = true;             //starting a new check or continuing a previous check?
+        int  cur_type_bot  = -1;               //current block type being checked
 
 
-      for (*dim.x = 0; *dim.x <= CHUNK_SIZE; ++*dim.x) {
-        int thisVoxel = chunk.getVoxel(dim.getTrueCoord(*dim.x, *dim.y, *dim.z));
-        int aboveVoxel = 0;
-        int belowVoxel = 0;
-        //if (y + 1 < CHUNK_SIZE)
-          aboveVoxel = chunk.getVoxel(dim.getTrueCoord(*dim.x, *dim.y+1, *dim.z));
-        //if (y - 1 >= 0)
-          belowVoxel = chunk.getVoxel(dim.getTrueCoord(*dim.x, *dim.y-1, *dim.z));
+
+        for (*dim.x = 0; *dim.x <= CHUNK_SIZE; ++*dim.x) {
+          int thisVoxel = chunk.getVoxel(dim.getTrueCoord(*dim.x, *dim.y, *dim.z));
+          int aboveVoxel = 0;
+          int belowVoxel = 0;
+          //if (y + 1 < CHUNK_SIZE)
+            aboveVoxel = chunk.getVoxel(dim.getTrueCoord(*dim.x, *dim.y+1, *dim.z));
+          //if (y - 1 >= 0)
+            belowVoxel = chunk.getVoxel(dim.getTrueCoord(*dim.x, *dim.y-1, *dim.z));
 
 
-        ////////////
-        //Process top face
-        ////////////
-        if (start_new_top) {
-          if(thisVoxel != 0 && aboveVoxel == 0 && !meshed_top[*dim.z][*dim.x]) {
-            start_x_top = *dim.x;
-            start_z_top = *dim.z;
-            cur_type_top = thisVoxel;
-            start_new_top = false;
-          }
-        }
-        else {
-          if (thisVoxel != cur_type_top || meshed_top[*dim.z][*dim.x] || aboveVoxel) {
-            start_new_top = true;
-            end_x_top = *dim.x;
-
-            //find value for end_z_top
-            bool doneCheck = false;
-            for (int zCheck = start_z_top + 1; zCheck < CHUNK_SIZE && !doneCheck; ++zCheck) {
-              for (int xCheck = start_x_top; xCheck < end_x_top && !doneCheck; ++xCheck) {
-
-                if (chunk.getVoxel(dim.getTrueCoord(xCheck, *dim.y, zCheck)) != cur_type_top ||
-                    meshed_top[zCheck][xCheck] ||
-                    chunk.getVoxel(dim.getTrueCoord(xCheck, *dim.y+1, zCheck)) != 0) {
-                  doneCheck = true;
-                  end_z_top = zCheck;
-
-                  //reset meshed bools for failed row
-                  for (xCheck = xCheck - 1; xCheck >= 0; --xCheck)
-                    meshed_top[zCheck][xCheck] = false;
-                }
-                else {
-                  //update meshed bools while checking
-                  //it would be faster to undo a few changes than
-                  //to loop back through an entire check just to change all of them
-                  meshed_top[zCheck][xCheck] = true;
-                }
-              }
+          ////////////
+          //Process top face
+          ////////////
+          if (start_new_top) {
+            if(thisVoxel != 0 && aboveVoxel == 0 && !meshed_top[*dim.z][*dim.x]) {
+              start_x_top = *dim.x;
+              start_z_top = *dim.z;
+              cur_type_top = thisVoxel;
+              start_new_top = false;
             }
-            if (!doneCheck)
-              end_z_top = CHUNK_SIZE;
-
-
-            //fill the mesh object with the necessary vert data
-            glm::vec3 botLeft = dim.getTrueCoord(start_x_top, *dim.y+1, start_z_top),
-                      topLeft = dim.getTrueCoord(start_x_top, *dim.y+1, end_z_top),
-                      botRight = dim.getTrueCoord(end_x_top, *dim.y+1, start_z_top),
-                      topRight = dim.getTrueCoord(end_x_top, *dim.y+1, end_z_top);
-            /*if (dim.getD() == 0) {
-              ++botLeft.y;
-              ++
-            }*/
-            fillMeshVerts(thisMesh, botLeft, topLeft, topRight, botRight, false, dim.getD());
           }
           else {
-            meshed_top[*dim.z][*dim.x] = true;
-          }
-        }
+            if (thisVoxel != cur_type_top || meshed_top[*dim.z][*dim.x] || aboveVoxel) {
+              start_new_top = true;
+              end_x_top = *dim.x;
 
+              //find value for end_z_top
+              bool doneCheck = false;
+              for (int zCheck = start_z_top + 1; zCheck < CHUNK_SIZE && !doneCheck; ++zCheck) {
+                for (int xCheck = start_x_top; xCheck < end_x_top && !doneCheck; ++xCheck) {
 
-        ////////////
-        //Process bottom face
-        ////////////
-        if (start_new_bot) {
-          if(thisVoxel != 0 && belowVoxel == 0 && !meshed_bot[*dim.z][*dim.x]) {
-            start_x_bot = *dim.x;
-            start_z_bot = *dim.z;
-            cur_type_bot = thisVoxel;
-            start_new_bot = false;
-          }
-        }
-        else {
-          if (thisVoxel != cur_type_bot || meshed_bot[*dim.z][*dim.x] || belowVoxel) {
-            start_new_bot = true;
-            end_x_bot = *dim.x;
+                  if (chunk.getVoxel(dim.getTrueCoord(xCheck, *dim.y, zCheck)) != cur_type_top ||
+                      meshed_top[zCheck][xCheck] ||
+                      chunk.getVoxel(dim.getTrueCoord(xCheck, *dim.y+1, zCheck)) != 0) {
+                    doneCheck = true;
+                    end_z_top = zCheck;
 
-            //find value for end_z_bot
-            bool doneCheck = false;
-            for (int zCheck = start_z_bot + 1; zCheck < CHUNK_SIZE && !doneCheck; ++zCheck) {
-              for (int xCheck = start_x_bot; xCheck < end_x_bot && !doneCheck; ++xCheck) {
-
-                if (chunk.getVoxel(dim.getTrueCoord(xCheck, *dim.y, zCheck)) != cur_type_bot ||
-                    meshed_bot[zCheck][xCheck] ||
-                    chunk.getVoxel(dim.getTrueCoord(xCheck, *dim.y-1, zCheck)) != 0) {
-                  doneCheck = true;
-                  end_z_bot = zCheck;
-
-                  //reset meshed bools for failed row
-                  for (xCheck = xCheck - 1; xCheck >= 0; --xCheck)
-                    meshed_bot[zCheck][xCheck] = false;
-                }
-                else {
-                  //update meshed bools while checking
-                  //it would be faster to undo a few changes than
-                  //to loop back through an entire check just to change all of them
-                  meshed_bot[zCheck][xCheck] = true;
+                    //reset meshed bools for failed row
+                    for (xCheck = xCheck - 1; xCheck >= 0; --xCheck)
+                      meshed_top[zCheck][xCheck] = false;
+                  }
+                  else {
+                    //update meshed bools while checking
+                    //it would be faster to undo a few changes than
+                    //to loop back through an entire check just to change all of them
+                    meshed_top[zCheck][xCheck] = true;
+                  }
                 }
               }
+              if (!doneCheck)
+                end_z_top = CHUNK_SIZE;
+
+
+              //fill the mesh object with the necessary vert data
+              glm::vec3 botLeft = dim.getTrueCoord(start_x_top, *dim.y+1, start_z_top),
+                        topLeft = dim.getTrueCoord(start_x_top, *dim.y+1, end_z_top),
+                        botRight = dim.getTrueCoord(end_x_top, *dim.y+1, start_z_top),
+                        topRight = dim.getTrueCoord(end_x_top, *dim.y+1, end_z_top);
+              fillMeshVerts(thisMesh, botLeft, topLeft, topRight, botRight, false, dim.getD());
             }
-            if (!doneCheck)
-              end_z_bot = CHUNK_SIZE;
+            else {
+              meshed_top[*dim.z][*dim.x] = true;
+            }
+          }
 
 
-            //fill the mesh object with the necessary vert data
-            glm::vec3 botLeft = dim.getTrueCoord(start_x_bot, *dim.y, start_z_bot),
-                      topLeft = dim.getTrueCoord(start_x_bot, *dim.y, end_z_bot),
-                      botRight = dim.getTrueCoord(end_x_bot, *dim.y, start_z_bot),
-                      topRight = dim.getTrueCoord(end_x_bot, *dim.y, end_z_bot);
-            fillMeshVerts(thisMesh, botLeft, topLeft, topRight, botRight, true, dim.getD());
+          ////////////
+          //Process bottom face
+          ////////////
+          if (start_new_bot) {
+            if(thisVoxel != 0 && belowVoxel == 0 && !meshed_bot[*dim.z][*dim.x]) {
+              start_x_bot = *dim.x;
+              start_z_bot = *dim.z;
+              cur_type_bot = thisVoxel;
+              start_new_bot = false;
+            }
           }
           else {
-            meshed_bot[*dim.z][*dim.x] = true;
+            if (thisVoxel != cur_type_bot || meshed_bot[*dim.z][*dim.x] || belowVoxel) {
+              start_new_bot = true;
+              end_x_bot = *dim.x;
+
+              //find value for end_z_bot
+              bool doneCheck = false;
+              for (int zCheck = start_z_bot + 1; zCheck < CHUNK_SIZE && !doneCheck; ++zCheck) {
+                for (int xCheck = start_x_bot; xCheck < end_x_bot && !doneCheck; ++xCheck) {
+
+                  if (chunk.getVoxel(dim.getTrueCoord(xCheck, *dim.y, zCheck)) != cur_type_bot ||
+                      meshed_bot[zCheck][xCheck] ||
+                      chunk.getVoxel(dim.getTrueCoord(xCheck, *dim.y-1, zCheck)) != 0) {
+                    doneCheck = true;
+                    end_z_bot = zCheck;
+
+                    //reset meshed bools for failed row
+                    for (xCheck = xCheck - 1; xCheck >= 0; --xCheck)
+                      meshed_bot[zCheck][xCheck] = false;
+                  }
+                  else {
+                    //update meshed bools while checking
+                    //it would be faster to undo a few changes than
+                    //to loop back through an entire check just to change all of them
+                    meshed_bot[zCheck][xCheck] = true;
+                  }
+                }
+              }
+              if (!doneCheck)
+                end_z_bot = CHUNK_SIZE;
+
+
+              //fill the mesh object with the necessary vert data
+              glm::vec3 botLeft = dim.getTrueCoord(start_x_bot, *dim.y, start_z_bot),
+                        topLeft = dim.getTrueCoord(start_x_bot, *dim.y, end_z_bot),
+                        botRight = dim.getTrueCoord(end_x_bot, *dim.y, start_z_bot),
+                        topRight = dim.getTrueCoord(end_x_bot, *dim.y, end_z_bot);
+              fillMeshVerts(thisMesh, botLeft, topLeft, topRight, botRight, true, dim.getD());
+            }
+            else {
+              meshed_bot[*dim.z][*dim.x] = true;
+            }
           }
         }
       }
     }
   }
-
-  //dim bracket
-  }
-  //
 }
 
 void World::fillMeshVerts(ChunkMesh &mesh, glm::vec3 botLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 botRight, bool negFace, int dim) {
