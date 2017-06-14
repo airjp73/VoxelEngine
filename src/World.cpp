@@ -9,8 +9,7 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 
 #include "../libs/FastNoise/FastNoise.h"
 #include "../include/World.h"
-#include "../include/ChunkPosition.h"
-#include "../include/ChunkMesh.h"
+#include "../include/Chunk.h"
 #include "../include/shaderFuncs.h"
 
 #include <iostream>
@@ -24,7 +23,7 @@ void World::render(glm::mat4 view, glm::mat4 projection) {
   GLuint projLoc = glGetUniformLocation(_terrainShader, "projection");
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
   glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
-  glDrawArrays(GL_TRIANGLES, 0, _meshes.back()._verts.size());
+  glDrawArrays(GL_TRIANGLES, 0, _chunks.back()._verts.size());
   glBindVertexArray(0);
 }
 
@@ -42,8 +41,8 @@ World::World(glm::ivec3 playerStartPos) {
   glBindBuffer(GL_ARRAY_BUFFER, _VBO);
   glBufferData(
     GL_ARRAY_BUFFER,
-    _meshes.back()._verts.size() * sizeof(GLfloat),
-    &(_meshes.back()._verts.front()),
+    _chunks.back()._verts.size() * sizeof(GLfloat),
+    &(_chunks.back()._verts.front()),
     GL_STATIC_DRAW
   );
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
@@ -70,7 +69,7 @@ void World::genChunk(glm::ivec3 pos) {
   }
 
   //gen terrain
-  _chunks.push_back(ChunkPosition());
+  _chunks.push_back(Chunk());
   for (int y = 0; y < CHUNK_SIZE; ++y) {
     for (int z = 0; z < CHUNK_SIZE; ++z) {
       for (int x = 0; x < CHUNK_SIZE; ++x) {
@@ -132,11 +131,7 @@ public:
     return coord;
   }
 };
-void World::meshChunk(ChunkPosition &chunk) {
-  //create a ChunkMesh object and create a reference to it to avoid _meshes.back() calls
-  _meshes.push_back(ChunkMesh());
-  ChunkMesh &thisMesh = _meshes.back();
-
+void World::meshChunk(Chunk &chunk) {
 
   ///////////////////////////////////////////////
   //Loop through all 3 dimensions
@@ -230,7 +225,7 @@ void World::meshChunk(ChunkPosition &chunk) {
                         topLeft = dim.getTrueCoord(start_x_top, *dim.y+1, end_z_top),
                         botRight = dim.getTrueCoord(end_x_top, *dim.y+1, start_z_top),
                         topRight = dim.getTrueCoord(end_x_top, *dim.y+1, end_z_top);
-              fillMeshVerts(thisMesh, botLeft, topLeft, topRight, botRight, false, dim.getD());
+              fillMeshVerts(chunk, botLeft, topLeft, topRight, botRight, false, dim.getD());
 
 
               if (meshed_top[*dim.z][*dim.x] || aboveVoxel || thisVoxel == 0)
@@ -295,7 +290,7 @@ void World::meshChunk(ChunkPosition &chunk) {
                         topLeft = dim.getTrueCoord(start_x_bot, *dim.y, end_z_bot),
                         botRight = dim.getTrueCoord(end_x_bot, *dim.y, start_z_bot),
                         topRight = dim.getTrueCoord(end_x_bot, *dim.y, end_z_bot);
-              fillMeshVerts(thisMesh, botLeft, topLeft, topRight, botRight, true, dim.getD());
+              fillMeshVerts(chunk, botLeft, topLeft, topRight, botRight, true, dim.getD());
 
               if (meshed_bot[*dim.z][*dim.x] || belowVoxel || thisVoxel == 0)
                 start_new_bot = true;
@@ -317,7 +312,7 @@ void World::meshChunk(ChunkPosition &chunk) {
   }
 }
 
-void World::fillMeshVerts(ChunkMesh &mesh, glm::vec3 botLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 botRight, bool negFace, int dim) {
+void World::fillMeshVerts(Chunk &mesh, glm::vec3 botLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 botRight, bool negFace, int dim) {
   if (!negFace) {
     //vert
       //normal

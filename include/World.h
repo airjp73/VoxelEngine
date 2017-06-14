@@ -11,8 +11,7 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 #include <vector>
 
 #include "Logger.h"
-#include "ChunkPosition.h"
-#include "ChunkMesh.h"
+#include "Chunk.h"
 
 //FastNoise open-source lib for terrain gen
 #include "../libs/FastNoise/FastNoise.h"
@@ -22,19 +21,24 @@ private:
   static Logger worldLog;
 
   FastNoise _terrainNoise;
-  std::vector<ChunkPosition> _chunks;
-  std::vector<ChunkMesh> _meshes;
+  std::vector<Chunk> _chunks;
 
   GLuint _VAO, _VBO;
   GLuint _terrainShader;
 
   void genChunk(glm::ivec3 pos);
-  void meshChunk(ChunkPosition &chunk);
-  void fillMeshVerts(ChunkMesh &mesh, glm::vec3 botLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 botRight, bool negFace, int dim);
+  void meshChunk(Chunk &chunk);
+  void fillMeshVerts(Chunk &chunk, glm::vec3 botLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 botRight, bool negFace, int dim);
 
 public:
   World(glm::ivec3 playerStartPos);
   void render(glm::mat4 view, glm::mat4 projection);
+
+  //global voxel access
+  int getVoxel(glm::ivec3 loc);
+  int getVoxel(int x, int y, int z);
+  void setVoxel(glm::ivec3 loc, int val);
+  void setVoxel(int x, int y, int z, int val);
 };
 
 #endif

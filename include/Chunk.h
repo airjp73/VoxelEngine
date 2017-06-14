@@ -3,10 +3,11 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 © Aaron Pettengill 2017
 */
 
-#ifndef CHUNK_POSITION_H
-#define CHUNK_POSITION_H
+#ifndef CHUNK_H
+#define CHUNK_H
 
 #include <glm/glm.hpp>
+#include <GL/glew.h>
 
 #include <vector>
 
@@ -20,13 +21,14 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
   -- Voxel data within the chunk
 */
 
-struct ChunkPosition {
+struct Chunk {
 
-  static Logger chunkPosLog;
+  static Logger chunkLog;
   glm::ivec3 _chunkPos;
   std::vector<int> _voxels;
+  std::vector<GLfloat> _verts;
 
-  ChunkPosition();
+  Chunk();
   int getVoxel(glm::ivec3 loc);
   int getVoxel(int x, int y, int z);
   void setVoxel(glm::ivec3 loc, int val);

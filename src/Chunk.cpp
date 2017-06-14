@@ -6,22 +6,22 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 #include <glm/glm.hpp>
 #include <vector>
 
-#include "../include/ChunkPosition.h"
+#include "../include/Chunk.h"
 
-Logger ChunkPosition::chunkPosLog("ChunkPosition");
+Logger Chunk::chunkLog("Chunk");
 
-ChunkPosition::ChunkPosition() {
+Chunk::Chunk() {
   //init _voxels to proper dimensions
   for (int i = 0; i < CHUNK_SIZE * CHUNK_SIZE * CHUNK_SIZE; ++i) {
     _voxels.push_back(0);
   }
 }
 
-int ChunkPosition::getVoxel(glm::ivec3 loc) {
+int Chunk::getVoxel(glm::ivec3 loc) {
   return getVoxel(loc.x, loc.y, loc.z);
 }
 
-int ChunkPosition::getVoxel(int x, int y, int z) {
+int Chunk::getVoxel(int x, int y, int z) {
   if (
     x < 0 || x >= CHUNK_SIZE ||
     y < 0 || y >= CHUNK_SIZE ||
@@ -38,18 +38,18 @@ int ChunkPosition::getVoxel(int x, int y, int z) {
   return _voxels[index];
 }
 
-void ChunkPosition::setVoxel(glm::ivec3 loc, int val) {
+void Chunk::setVoxel(glm::ivec3 loc, int val) {
   setVoxel(loc.x, loc.y, loc.z, val);
 }
 
-void ChunkPosition::setVoxel(int x, int y, int z, int val) {
+void Chunk::setVoxel(int x, int y, int z, int val) {
   if (
     x < 0 || x >= CHUNK_SIZE ||
     y < 0 || y >= CHUNK_SIZE ||
     z < 0 || z >= CHUNK_SIZE
   ) {
     std::string pos = std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z);
-    chunkPosLog.log("Attempt to write voxel out of bounds -- " + pos, Logger::ERROR);
+    chunkLog.log("Attempt to write voxel out of bounds -- " + pos, Logger::ERROR);
     return;
   }
 
