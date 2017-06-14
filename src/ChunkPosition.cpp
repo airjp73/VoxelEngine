@@ -27,7 +27,7 @@ int ChunkPosition::getVoxel(int x, int y, int z) {
     y < 0 || y >= CHUNK_SIZE ||
     z < 0 || z >= CHUNK_SIZE
   ) {
-    std::string str = std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z);
+    //std::string str = std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z);
     //chunkPosLog.log("Attempt to read voxel out of bounds -- " + str, Logger::ERROR);
     return 0;
   }
@@ -39,17 +39,22 @@ int ChunkPosition::getVoxel(int x, int y, int z) {
 }
 
 void ChunkPosition::setVoxel(glm::ivec3 loc, int val) {
+  setVoxel(loc.x, loc.y, loc.z, val);
+}
+
+void ChunkPosition::setVoxel(int x, int y, int z, int val) {
   if (
-    loc.x < 0 || loc.x >= CHUNK_SIZE ||
-    loc.y < 0 || loc.y >= CHUNK_SIZE ||
-    loc.z < 0 || loc.z >= CHUNK_SIZE
+    x < 0 || x >= CHUNK_SIZE ||
+    y < 0 || y >= CHUNK_SIZE ||
+    z < 0 || z >= CHUNK_SIZE
   ) {
-    chunkPosLog.log("Attempt to write voxel out of bounds", Logger::ERROR);
+    std::string pos = std::to_string(x) + ", " + std::to_string(y) + ", " + std::to_string(z);
+    chunkPosLog.log("Attempt to write voxel out of bounds -- " + pos, Logger::ERROR);
     return;
   }
 
-  int index = loc.y * CHUNK_SIZE * CHUNK_SIZE +
-              loc.z * CHUNK_SIZE +
-              loc.x;
+  int index = y * CHUNK_SIZE * CHUNK_SIZE +
+              z * CHUNK_SIZE +
+              x;
   _voxels[index] = val;
 }

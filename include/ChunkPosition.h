@@ -30,6 +30,7 @@ struct ChunkPosition {
   int getVoxel(glm::ivec3 loc);
   int getVoxel(int x, int y, int z);
   void setVoxel(glm::ivec3 loc, int val);
+  void setVoxel(int x, int y, int z, int val);
 };
 
 #endif

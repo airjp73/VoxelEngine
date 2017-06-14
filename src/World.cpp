@@ -182,7 +182,6 @@ void World::meshChunk(ChunkPosition &chunk) {
           //if (y - 1 >= 0)
             belowVoxel = chunk.getVoxel(dim.getTrueCoord(*dim.x, *dim.y-1, *dim.z));
 
-
           ////////////
           //Process top face
           ////////////
@@ -192,11 +191,11 @@ void World::meshChunk(ChunkPosition &chunk) {
               start_z_top = *dim.z;
               cur_type_top = thisVoxel;
               start_new_top = false;
+              meshed_top[*dim.z][*dim.x] = true;
             }
           }
           else {
             if (thisVoxel != cur_type_top || meshed_top[*dim.z][*dim.x] || aboveVoxel) {
-              start_new_top = true;
               end_x_top = *dim.x;
 
               //find value for end_z_top
@@ -211,7 +210,7 @@ void World::meshChunk(ChunkPosition &chunk) {
                     end_z_top = zCheck;
 
                     //reset meshed bools for failed row
-                    for (xCheck = xCheck - 1; xCheck >= 0; --xCheck)
+                    for (xCheck = xCheck - 1; xCheck >= start_x_top; --xCheck)
                       meshed_top[zCheck][xCheck] = false;
                   }
                   else {
@@ -232,12 +231,22 @@ void World::meshChunk(ChunkPosition &chunk) {
                         botRight = dim.getTrueCoord(end_x_top, *dim.y+1, start_z_top),
                         topRight = dim.getTrueCoord(end_x_top, *dim.y+1, end_z_top);
               fillMeshVerts(thisMesh, botLeft, topLeft, topRight, botRight, false, dim.getD());
+
+
+              if (meshed_top[*dim.z][*dim.x] || aboveVoxel || thisVoxel == 0)
+                start_new_top = true;
+              else {
+                //if the check ended because the block just didn't match
+                //then start new check on this block
+                start_x_top = *dim.x;
+                start_z_top = *dim.z;
+                cur_type_top = thisVoxel;
+              }
             }
             else {
               meshed_top[*dim.z][*dim.x] = true;
             }
           }
-
 
           ////////////
           //Process bottom face
@@ -252,7 +261,6 @@ void World::meshChunk(ChunkPosition &chunk) {
           }
           else {
             if (thisVoxel != cur_type_bot || meshed_bot[*dim.z][*dim.x] || belowVoxel) {
-              start_new_bot = true;
               end_x_bot = *dim.x;
 
               //find value for end_z_bot
@@ -267,7 +275,7 @@ void World::meshChunk(ChunkPosition &chunk) {
                     end_z_bot = zCheck;
 
                     //reset meshed bools for failed row
-                    for (xCheck = xCheck - 1; xCheck >= 0; --xCheck)
+                    for (xCheck = xCheck - 1; xCheck >= start_x_bot; --xCheck)
                       meshed_bot[zCheck][xCheck] = false;
                   }
                   else {
@@ -288,6 +296,16 @@ void World::meshChunk(ChunkPosition &chunk) {
                         botRight = dim.getTrueCoord(end_x_bot, *dim.y, start_z_bot),
                         topRight = dim.getTrueCoord(end_x_bot, *dim.y, end_z_bot);
               fillMeshVerts(thisMesh, botLeft, topLeft, topRight, botRight, true, dim.getD());
+
+              if (meshed_bot[*dim.z][*dim.x] || belowVoxel || thisVoxel == 0)
+                start_new_bot = true;
+              else {
+                //if the check ended because the block just didn't match
+                //then start new check on this block
+                start_x_bot = *dim.x;
+                start_z_bot = *dim.z;
+                cur_type_bot = thisVoxel;
+              }
             }
             else {
               meshed_bot[*dim.z][*dim.x] = true;
