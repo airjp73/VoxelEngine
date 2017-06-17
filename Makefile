@@ -39,13 +39,13 @@ SOIL   = -lSOIL -I /usr/include/SOIL
 
 #### COMPILE RULES
 all: $(LIBS) $(OBJECTS)
-	$(CC) $(CPPFLAGS) $^ -o $(BIN)/$(EXE) $(LDLIBS)
+	$(CC) $(CPPFLAGS) $^ -o $(BIN)/$(EXE) $(LDLIBS) -g -O0
 
 $(OBJ)/main.o: $(SRC)/main.cpp
-	$(CC) -c $(CPPFLAGS) $^ -o $@
+	$(CC) -c $(CPPFLAGS) $^ -o $@ -g
 
 $(OBJ)/%.o: $(SRC)/%.cpp $(INCLUDE)/%.h
-	$(CC) -c $(CPPFLAGS) $< -o $@
+	$(CC) -c $(CPPFLAGS) $< -o $@ -g
 
 $(FASTNOISE_OBJ): $(FASTNOISE_SRC) $(FASTNOISE_INC)
 	$(CC) -c $(CPPFLAGS) $< -o $@

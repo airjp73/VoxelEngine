@@ -33,6 +33,9 @@ private:
   GLfloat mouseSensitivity;
   GLfloat fov;
 
+  //Sprinting
+  bool isSprinting;
+
 public:
   //=========================
   //Constructor
@@ -62,6 +65,9 @@ public:
 
   /* Changes fov to zoom in based on mouse scroll */
   void zoom(GLfloat yoffset);
+
+  /* for easier navigation */
+  void setSprint(bool sprinting);
 };
 
 #endif

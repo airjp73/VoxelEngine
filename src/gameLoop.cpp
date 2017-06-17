@@ -18,7 +18,7 @@ void runGameLoop(GLFWwindow *mainWindow, float windowWidth, float windowHeight) 
   Logger gameLoopLog("Game Loop");
   World gameWorld(glm::ivec3(0,0,0));
 
-  glm::mat4 projection = glm::perspective(camera.getFov(), windowWidth/windowHeight, 0.1f, 100.0f);
+  glm::mat4 projection = glm::perspective(camera.getFov(), windowWidth/windowHeight, 0.1f, 1000.0f);
   GLfloat deltaTime = 0.0f;
   GLfloat lastFrame = 0.0f;
   GLfloat fpsTime = 0.0f; //don't display fps every frame

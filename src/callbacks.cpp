@@ -89,5 +89,6 @@ void do_movement(GLfloat delta) {
   bool left   = keys[GLFW_KEY_LEFT] || keys[GLFW_KEY_A];
   bool fly    = keys[GLFW_KEY_SPACE];
   bool fall   = keys[GLFW_KEY_LEFT_SHIFT];
+  camera.setSprint(keys[GLFW_KEY_E]);
   camera.move(up, down, right, left, fly, fall, delta);
 }
