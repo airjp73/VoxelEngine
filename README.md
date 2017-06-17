@@ -1,5 +1,8 @@
 ## VoxelEngine
-A voxel-based game engine using an entity-component style system.
+A voxel-based game engine using an entity-component style system. Currently in early stages of developement.
+
+#### Screenshots
+![Early chunk generation](/screenshots/early_screencap_1.jpg)
 
 #### Documentation
 For design goals and plans see the Wiki
