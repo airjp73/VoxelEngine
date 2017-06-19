@@ -9,8 +9,6 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 #include <GL/glew.h>
 //GLFW
 #include <GLFW/glfw3.h>
-//SOIL
-#include <SOIL/SOIL.h>
 //GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

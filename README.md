@@ -3,6 +3,7 @@ A voxel-based game engine using an entity-component style system. Currently in e
 
 #### Screenshots
 ![Early chunk generation](/screenshots/early_screencap_1.jpg)
+![Early chunk generation on windows](/screenshots/windows_early_1.jpg)
 
 #### Documentation
 For design goals and plans see the Wiki
