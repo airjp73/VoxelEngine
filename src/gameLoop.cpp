@@ -13,10 +13,23 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 #include "../include/Camera.h"
 #include "../include/World.h"
 #include "../include/Logger.h"
+#include "../include/TaskScheduler.h"
+#include "../include/ITask.h"
+
+/*class TestTask : public ITask {
+  void execute() {
+    for (int i = 0; i < 100; ++i)
+      std::cout << i << "\n";
+  }
+};*/
 
 void runGameLoop(GLFWwindow *mainWindow, float windowWidth, float windowHeight) {
   Logger gameLoopLog("Game Loop");
   World gameWorld(glm::ivec3(0,0,0));
+
+  /*TaskScheduler *s = TaskScheduler::getInstance();
+  TestTask bob;
+  s->addTask(&bob, TaskScheduler::Priority::HIGH);*/
 
   glm::mat4 projection = glm::perspective(camera.getFov(), windowWidth/windowHeight, 0.1f, 1000.0f);
   GLfloat deltaTime = 0.0f;
