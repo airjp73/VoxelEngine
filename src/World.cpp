@@ -85,7 +85,7 @@ World::World(glm::ivec3 playerStartPos) {
   }
 
   //Shaders
-  _terrainShader = createShader("../src/shaders/terrainVert.vert", "../src/shaders/terrainFrag.frag");
+  _terrainShader = createShader("shaders/terrainVert.vert", "shaders/terrainFrag.frag");
 }
 
 void World::genChunk(glm::ivec3 pos) {

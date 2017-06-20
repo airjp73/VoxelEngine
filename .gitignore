@@ -4,3 +4,10 @@
 
 #ignore 3rd party libs
 **/libs
+**.dll
+
+#visual studio files
+**/Debug
+**/.vs
+*.sln
+*.vcxproj*
