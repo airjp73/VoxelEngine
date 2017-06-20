@@ -112,9 +112,9 @@ int World::getVoxel(glm::ivec3 pos) {
 
 int World::getVoxel(int x, int y, int z) {
   //coords local to chunk
-  int vx = x % 16;
-  int vy = y % 16;
-  int vz = z % 16;
+  int vx = x % CHUNK_SIZE;
+  int vy = y % CHUNK_SIZE;
+  int vz = z % CHUNK_SIZE;
 
   //if chunk pos is negative ex (-16, -16, -16)
   //then the local voxel coordinate needs to be inverted (-1 becomes 15)

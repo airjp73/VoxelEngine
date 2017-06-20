@@ -26,7 +26,7 @@ Camera::Camera() {
   yaw       = YAW;
   pitch     = PITCH;
 
-  camSpeed          = 10.0f;
+  camSpeed          = 50.0f;
   mouseSensitivity  = .25f;
   fov               = 45.0f;
 
@@ -68,7 +68,7 @@ GLfloat Camera::getFov() {
 void Camera::move(bool up, bool down, bool right, bool left, bool fly, bool fall, GLfloat deltaTime) {
   GLfloat velocity = camSpeed * deltaTime;
   if (isSprinting)
-    velocity *= 10;
+    velocity *= 5;
   if (up)
     camPos += camForward * velocity;
   if (down)
