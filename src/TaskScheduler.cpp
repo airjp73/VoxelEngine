@@ -12,6 +12,7 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 #include "../include/WorkerThread.h"
 #include "../include/ITask.h"
 
+Logger TaskScheduler::schedulerLogger("TaskScheduler");
 TaskScheduler* TaskScheduler::_instance = nullptr;
 std::mutex TaskScheduler::instanceMut;
 
@@ -24,6 +25,7 @@ TaskScheduler* TaskScheduler::getInstance() {
 
 TaskScheduler::TaskScheduler() : terminateThreads(false), numLowPri(0), maxLowPri(1) {
   NUM_THREADS = std::thread::hardware_concurrency() - 1;
+  schedulerLogger.log("------------------ NumThreads -- " + std::to_string(NUM_THREADS), Logger::DEBUG);
   for (int i = 0; i < NUM_THREADS; ++i)
     workerThreads.emplace_back(std::thread(WorkerThread()));
 }

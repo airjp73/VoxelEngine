@@ -6,12 +6,13 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 #ifndef TASK_SCHEDULER_H
 #define TASK_SCHEDULER_H
 
-
-#include "ITask.h"
 #include <thread>
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+
+#include "ITask.h"
+#include "Logger.h"
 
 /*
   The TaskScheduler is a singleton whose job it is to multithread the game engine
@@ -19,6 +20,8 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 */
 class TaskScheduler {
 private:
+  static Logger schedulerLogger;
+
   //singleton
   TaskScheduler();
   static TaskScheduler* _instance;

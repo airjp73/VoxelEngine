@@ -29,11 +29,11 @@ struct BucketNode {
 class ChunkMap {
 private:
   static Logger chunkMapLogger;
-  static const int HASH_MOD = 5003;
-  static const int PRIME_X = 1163;
-  static const int PRIME_Y = 1201;
-  static const int PRIME_Z = 491;
-  static const int PRIME_ABS = 107;
+  static const int HASH_MOD = 10039;
+  static const int PRIME_X = 37;
+  static const int PRIME_Y = 149;
+  static const int PRIME_Z = 331;
+  static const int PRIME_ABS = 953;
   std::vector<BucketNode*> buckets;
 
   int hash(int x, int y, int z);
