@@ -10,10 +10,13 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 #include <glm/glm.hpp>
 #include <vector>
 #include <unordered_map>
+#include <mutex>
+#include <queue>
 
 #include "Logger.h"
 #include "Chunk.h"
 #include "ChunkMap.h"
+#include "ITask.h"
 
 //FastNoise open-source lib for terrain gen
 #include "../libs/FastNoise/FastNoise.h"
@@ -21,7 +24,7 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 class World {
 private:
   static Logger worldLog;
-  static int    VIEW_DISTANCE;
+  static int VIEW_DISTANCE;
 
   //chunk data
   std::vector<Chunk> _chunks;
@@ -31,13 +34,18 @@ private:
   GLuint _VAO;
   std::vector<GLuint> _terrainVBOs;
   GLuint _terrainShader;
+  std::mutex updateVBOMutex;
+  std::queue<GLuint> updateVBOs;
 
   //chunk generation
   FastNoise _terrainNoise;
-  void genChunk(glm::ivec3 pos);
-  void genChunk(int x, int y, int z);
-  void meshChunk(Chunk &chunk);
+  //std::mutex noiseMutex;
+  //void genChunk(glm::ivec3 pos);
+  //void genChunk(int x, int y, int z);
+  void genVoxels(int chunk_id);
+  void meshChunk(int chunk_id);
   void fillMeshVerts(Chunk &chunk, glm::vec3 botLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 botRight, bool negFace, int dim);
+  void sendVertexData(int chunk_id);
 
 public:
   World(glm::ivec3 playerStartPos);
@@ -50,6 +58,29 @@ public:
   int getVoxel(int x, int y, int z);
   //void setVoxel(glm::ivec3 loc, int val);
   //void setVoxel(int x, int y, int z, int val);
+
+  //tasks
+  class GenVoxelsTask : public ITask {
+  private:
+    World *world;
+    int chunk_id;
+  public:
+    GenVoxelsTask(World *aworld, int achunk_id)
+      : world(aworld), chunk_id(achunk_id)
+    {}
+    void execute();
+  };
+
+  class MeshChunkTask : public ITask {
+  private:
+    World *world;
+    int chunk_id;
+  public:
+    MeshChunkTask(World *aworld, int achunk_id)
+      : world(aworld), chunk_id(achunk_id)
+    {}
+    void execute();
+  };
 };
 
 #endif

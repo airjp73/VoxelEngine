@@ -12,14 +12,19 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 #include "../include/Chunk.h"
 #include "../include/shaderFuncs.h"
 #include "../include/ChunkMap.h"
+#include "../include/ITask.h"
+#include "../include/TaskScheduler.h"
 
 #include <iostream>
 #include <unordered_map>
+#include <mutex>
 
 Logger World::worldLog("World");
-int    World::VIEW_DISTANCE = 3;
+int    World::VIEW_DISTANCE = 10;
 
 void World::render(glm::mat4 view, glm::mat4 projection) {
+  std::unique_lock<std::mutex> lock(updateVBOMutex);
+  //setup
   glUseProgram(_terrainShader);
   glBindVertexArray(_VAO);
   GLuint viewLoc = glGetUniformLocation(_terrainShader, "view");
@@ -27,80 +32,84 @@ void World::render(glm::mat4 view, glm::mat4 projection) {
   glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
   glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
+  //check for chunks that need updates
+  while (updateVBOs.size() > 0) {
+    sendVertexData(updateVBOs.front());
+    updateVBOs.pop();
+  }
+
   for (int i = 0; i < _terrainVBOs.size(); ++i) {
-    glBindBuffer(GL_ARRAY_BUFFER, _terrainVBOs[i]);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
-    glEnableVertexAttribArray(1);
-    glDrawArrays(GL_TRIANGLES, 0, _chunks[i]._verts.size());
+    std::unique_lock<std::mutex> chunkLock(_chunks[i]._chunkMutex, std::defer_lock);
+    if (chunkLock.try_lock() && _chunks[i]._verts.size() > 0) {
+      glBindBuffer(GL_ARRAY_BUFFER, _terrainVBOs[i]);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)0);
+      glEnableVertexAttribArray(0);
+      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
+      glEnableVertexAttribArray(1);
+      glDrawArrays(GL_TRIANGLES, 0, _chunks[i]._verts.size());
+    }
 
   }
   glBindVertexArray(0);
 }
 
 World::World(glm::ivec3 playerStartPos) {
+  TaskScheduler *scheduler = TaskScheduler::getInstance();
   _terrainNoise.SetNoiseType(FastNoise::NoiseType::Perlin);
 
-  //generate starting chunks
+  //create chunk objects
   for (int y = playerStartPos.y - VIEW_DISTANCE; y <= playerStartPos.y + VIEW_DISTANCE; ++y) {
     for (int z = playerStartPos.z - VIEW_DISTANCE; z <= playerStartPos.z + VIEW_DISTANCE; ++z) {
       for (int x = playerStartPos.x - VIEW_DISTANCE; x <= playerStartPos.x + VIEW_DISTANCE; ++x) {
-        //worldLog.log(std::to_string(x * CHUNK_SIZE) + " " + std::to_string(y * CHUNK_SIZE) + " " + std::to_string(z * CHUNK_SIZE), Logger::DEBUG);
-        genChunk(x * CHUNK_SIZE, y * CHUNK_SIZE, z * CHUNK_SIZE);
+        _chunks.push_back(Chunk(x * CHUNK_SIZE, y * CHUNK_SIZE, z * CHUNK_SIZE));
         _chunkMap.addChunk(x * CHUNK_SIZE, y * CHUNK_SIZE, z * CHUNK_SIZE, _chunks.size() - 1);
         _terrainVBOs.push_back(0);
-        //Chunk &curChunk = _chunks.back();
-        //worldLog.log(std::to_string(curChunk._chunkPos.x) + " " + std::to_string(curChunk._chunkPos.y) + " " + std::to_string(curChunk._chunkPos.z), Logger::DEBUG);
       }
     }
   }
-  //give chunks pointers to neighbors
-  /*for (int i = 0; i < _chunks.size(); ++i) {
-    glm::ivec3 pos = _chunks[i].getPos();
-    _chunks[i].neighbors[Chunk::POS_Y] = _chunkMap.getChunk(pos.x, pos.y + CHUNK_SIZE, pos.z);
-    _chunks[i].neighbors[Chunk::NEG_Y] = _chunkMap.getChunk(pos.x, pos.y - CHUNK_SIZE, pos.z);
-    _chunks[i].neighbors[Chunk::POS_X] = _chunkMap.getChunk(pos.x + CHUNK_SIZE, pos.y, pos.z);
-    _chunks[i].neighbors[Chunk::NEG_X] = _chunkMap.getChunk(pos.x - CHUNK_SIZE, pos.y, pos.z);
-    _chunks[i].neighbors[Chunk::POS_Z] = _chunkMap.getChunk(pos.x, pos.y, pos.z + CHUNK_SIZE);
-    _chunks[i].neighbors[Chunk::NEG_Z] = _chunkMap.getChunk(pos.x, pos.y, pos.z - CHUNK_SIZE);
-  }*/
 
-  //mesh chunks
-  for (int i = 0; i < _chunks.size(); ++i) {
-    meshChunk(_chunks[i]);
-  }
-
-  //Mesh Data
+  //VAO and VBOs
   glGenVertexArrays(1, &_VAO);
   glGenBuffers(_terrainVBOs.size(), _terrainVBOs.data());
-  for (int i = 0; i < _terrainVBOs.size(); ++i) {
-    glBindBuffer(GL_ARRAY_BUFFER, _terrainVBOs[i]);
-    glBufferData(
-      GL_ARRAY_BUFFER,
-      _chunks[i]._verts.size() * sizeof(GLfloat),
-      _chunks[i]._verts.data(),
-      GL_STATIC_DRAW
-    );
-  }
+
+  //generate voxels
+  for (int i = 0; i < _chunks.size(); ++i)
+    scheduler->addTask(new GenVoxelsTask(this, i), TaskScheduler::Priority::MED);
+  //mesh chunks
+  for (int i = 0; i < _chunks.size(); ++i)
+    scheduler->addTask(new MeshChunkTask(this, i), TaskScheduler::Priority::MED);
 
   //Shaders
   _terrainShader = createShader("shaders/terrainVert.vert", "shaders/terrainFrag.frag");
 }
 
-void World::genChunk(glm::ivec3 pos) {
-  genChunk(pos.x, pos.y, pos.z);
+void World::sendVertexData(int chunk_id) {
+  Chunk &chunk = _chunks[chunk_id];
+  GLuint VBO = _terrainVBOs[chunk_id];
+
+  //glBindVertexArray(_VAO);
+  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  glBufferData(
+    GL_ARRAY_BUFFER,
+    chunk._verts.size() * sizeof(GLfloat),
+    chunk._verts.data(),
+    GL_STATIC_DRAW
+  );
+  //glBindVertexArray(0);
 }
 
-void World::genChunk(int x_pos, int y_pos, int z_pos) {
-  //gen terrain with 3d noise
-  _chunks.push_back(Chunk(x_pos, y_pos, z_pos));
-  //worldLog.log(std::to_string(_chunks.back()._chunkPos.x) + std::to_string(_chunks.back()._chunkPos.y) + std::to_string(_chunks.back()._chunkPos.z), Logger::DEBUG);
+void World::genVoxels(int chunk_id) {
+  //std::unique_lock<std::mutex> lock(noiseMutex);
+  //lock.unlock();
+  Chunk &chunk = _chunks[chunk_id];
+  glm::ivec3 pos = chunk.getPos();
   for (int y = 0; y < CHUNK_SIZE; ++y) {
     for (int z = 0; z < CHUNK_SIZE; ++z) {
       for (int x = 0; x < CHUNK_SIZE; ++x) {
-        if (_terrainNoise.GetNoise(x+x_pos, y+y_pos, z+z_pos) > 0)
-          _chunks.back().setVoxel(x, y, z, 1);
+        //lock.lock();
+        if (_terrainNoise.GetNoise(x+pos.x, y+pos.y, z+pos.z) > 0)
+          chunk.setVoxel(x, y, z, 1);
+        //lock.unlock();
       }
     }
   }
@@ -192,7 +201,10 @@ public:
     return coord;
   }
 };
-void World::meshChunk(Chunk &chunk) {
+
+void World::meshChunk(int chunk_id) {
+  Chunk &chunk = _chunks[chunk_id];
+  std::lock_guard<std::mutex> chunkLock(chunk._chunkMutex);
 
   ///////////////////////////////////////////////
   //Loop through all 3 dimensions
@@ -373,22 +385,12 @@ void World::meshChunk(Chunk &chunk) {
       }
     }
   }
+  std::lock_guard<std::mutex> lock(updateVBOMutex);
+  updateVBOs.push(chunk_id);
   //worldLog.log("Done Mesh", Logger::DEBUG);
 }
 
 void World::fillMeshVerts(Chunk &mesh, glm::vec3 botLeft, glm::vec3 topLeft, glm::vec3 topRight, glm::vec3 botRight, bool negFace, int dim) {
-  /*botLeft.x += mesh._chunkPos.x;
-  botLeft.y += mesh._chunkPos.y;
-  botLeft.z += mesh._chunkPos.z;
-  topLeft.x += mesh._chunkPos.x;
-  topLeft.y += mesh._chunkPos.y;
-  topLeft.z += mesh._chunkPos.z;
-  topRight.x += mesh._chunkPos.x;
-  topRight.y += mesh._chunkPos.y;
-  topRight.z += mesh._chunkPos.z;
-  botRight.x += mesh._chunkPos.x;
-  botRight.y += mesh._chunkPos.y;
-  botRight.z += mesh._chunkPos.z;*/
 
   if (!negFace) {
     //vert
@@ -470,4 +472,15 @@ void World::fillMeshVerts(Chunk &mesh, glm::vec3 botLeft, glm::vec3 topLeft, glm
       mesh._verts.push_back(-(dim == 0));
       mesh._verts.push_back(-(dim == 1));
   }
+}
+
+//////////////////////////////////Tasks
+void World::GenVoxelsTask::execute() {
+  //std::cout << "GenVoxels\n";
+  world->genVoxels(chunk_id);
+}
+
+void World::MeshChunkTask::execute() {
+  //std::cout << "MeshChunk\n";
+  world->meshChunk(chunk_id);
 }

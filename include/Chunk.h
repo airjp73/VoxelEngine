@@ -11,6 +11,7 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 
 #include <vector>
 #include <memory>
+#include <mutex>
 
 #include "Logger.h"
 
@@ -33,18 +34,22 @@ private:
 
   //6 sides of cube == 6 neighbors
   //top, bot, +x, -x, +z, -z
-  static const int POS_Y = 0;
+  /*static const int POS_Y = 0;
   static const int NEG_Y = 1;
   static const int POS_X = 2;
   static const int NEG_X = 3;
   static const int POS_Z = 4;
   static const int NEG_Z = 5;
   static const int NUM_NEIGHBORS = 6;
-  std::vector<Chunk*> neighbors;
+  std::vector<Chunk*> neighbors;*/
 public:
+  std::mutex _chunkMutex;
   std::vector<int> _voxels;
   Chunk();
   Chunk(int x, int y, int z);
+  Chunk(const Chunk &chunk)
+    : _chunkPos(chunk._chunkPos), _verts(chunk._verts), _voxels(chunk._voxels)
+  {}
   void initVoxels();
 
   int getVoxel(glm::ivec3 loc);

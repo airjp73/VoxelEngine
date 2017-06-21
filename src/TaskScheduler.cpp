@@ -6,14 +6,17 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 
 #include <thread>
 #include <mutex>
+#include <iostream>
 
 #include "../include/TaskScheduler.h"
 #include "../include/WorkerThread.h"
 #include "../include/ITask.h"
 
 TaskScheduler* TaskScheduler::_instance = nullptr;
+std::mutex TaskScheduler::instanceMut;
 
 TaskScheduler* TaskScheduler::getInstance() {
+  std::lock_guard<std::mutex> lock(instanceMut);
   if (_instance == nullptr)
     _instance = new TaskScheduler();
   return _instance;
@@ -22,7 +25,7 @@ TaskScheduler* TaskScheduler::getInstance() {
 TaskScheduler::TaskScheduler() : terminateThreads(false), numLowPri(0), maxLowPri(1) {
   NUM_THREADS = std::thread::hardware_concurrency() - 1;
   for (int i = 0; i < NUM_THREADS; ++i)
-    workerThreads.push_back(std::thread(WorkerThread()));
+    workerThreads.emplace_back(std::thread(WorkerThread()));
 }
 
 void TaskScheduler::addTask(ITask* task, Priority pri) {

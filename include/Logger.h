@@ -8,9 +8,11 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 
 #include <iostream>
 #include <string>
+#include <mutex>
 
 class Logger {
 private:
+  static std::mutex logMut;
   std::string _ownerName;
 public:
   static const int INFO = 0;

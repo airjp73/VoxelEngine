@@ -27,8 +27,9 @@ void runGameLoop(GLFWwindow *mainWindow, float windowWidth, float windowHeight) 
   Logger gameLoopLog("Game Loop");
   World gameWorld(glm::ivec3(0,0,0));
 
-  /*TaskScheduler *s = TaskScheduler::getInstance();
-  TestTask bob;
+  //make sure TaskScheduler is instantiated
+  TaskScheduler *s = TaskScheduler::getInstance();
+  /*TestTask bob;
   s->addTask(&bob, TaskScheduler::Priority::HIGH);*/
 
   glm::mat4 projection = glm::perspective(camera.getFov(), windowWidth/windowHeight, 0.1f, 1000.0f);

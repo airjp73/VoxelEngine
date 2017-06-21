@@ -42,6 +42,7 @@ private:
 public:
   //singleton
   static TaskScheduler* getInstance();
+  static std::mutex instanceMut;
 
   //add/aqcuire task
   enum Priority {LOW, MED, HIGH};
