@@ -58,7 +58,7 @@ public:
   //=========================
 
   /*  Moves the camera */
-  void move(bool up, bool down, bool right, bool left, bool fly, bool fall, GLfloat deltaTime);
+  void move(bool forward, bool back, bool right, bool left, bool up, bool down);
 
   /* Rotates the camera based on mouse movement */
   void rotate(GLfloat xoffset, GLfloat yoffset, GLboolean constrainPitch = true);

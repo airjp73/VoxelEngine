@@ -13,8 +13,9 @@ VoxelEngine is licensed under https://creativecommons.org/licenses/by-nc/4.0/
 
 //VoxelEngine
 #include "../include/gameLoop.h"
-#include "../include/callbacks.h"
 #include "../include/Logger.h"
+#include "../include/InputHandler.h"
+#include "../include/TaskScheduler.h"
 
 //const vars
 const int WINDOW_WIDTH = 800;
@@ -55,11 +56,14 @@ int main() {
   float windowWidth = width;
   float windowHeight = height;
 
-  //Input Callbacks (callbacks.cpp)
-  set_input_callbacks(mainWindow);
+  //Input Callbacks
+  InputHandler::init(mainWindow);
+
+  //make sure TaskScheduler is instantiated
+  TaskScheduler *s = TaskScheduler::getInstance();
 
   //OpenGL settings
-  //glEnable(GL_CULL_FACE);
+  glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
 
 
